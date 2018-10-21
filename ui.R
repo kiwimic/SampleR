@@ -9,6 +9,19 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
+      fileInput('uploaded_file', 'Wybierz plik do wczytania',
+                accept = c(
+                  'text/csv',
+                  'text/comma-separated-values',
+                  'text/tab-separated-values',
+                  'text/plain',
+                  '.csv',
+                  '.tsv',
+                  '.xlsx',
+                  ".xls"
+                )
+                ),
+      uiOutput("parametry_do_wcztania_pliku"),
       selectizeInput("wybor_metody",
                      label = "Wybór metody próbkowania: ",
                      choices = c("Próba losowa"=1,
