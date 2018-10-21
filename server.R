@@ -1,4 +1,5 @@
 library(shiny)
+options(shiny.maxRequestSize = 200*1024^2) #200MB limit wielkości pliku do upload
 source("global.R", encoding = "utf-8")
 
 # Define server logic required to draw a histogram
@@ -16,12 +17,67 @@ shinyServer(function(input, output) {
     
   })
   
+  sheets_name <- reactive({
+    if (!is.null(input$uploaded_file)) {
+      file_ext <- stringr::str_extract(tolower(input$uploaded_file), pattern = "(\\.[a-z]+)$")
+      if (file_ext %in% c(".xls", ".xlsx")) {
+        return(excel_sheets(path = input$uploaded_file$datapath)) 
+      }
+    } else {
+      return(NULL)
+    }
+  })
+  
+  
   output$opis_metody <- renderText({
     if (!is.null(input$wybor_metody)) {
       wybrana_metoda <- as.numeric(input$wybor_metody)
       str_wrap(OpisMetod_list[[wybrana_metoda]], 50)
     }
   })
+  
+  output$parametry_do_wcztania_pliku <- renderUI({
+    if (is.null(input$uploaded_file))
+      return()
+    
+    print(input$uploaded_file)
+    file_ext <- stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
+    print(file_ext)
+    # Depending on input$input_type, we'll generate a different
+    # UI component and send it to the client.
+    switch(file_ext,
+           ".xls" = {selectizeInput("wybor_arkusza_xls",
+                           label = "Wybierz arkusz",
+                           choices = sheets_name(),
+                           selected = character(0), 
+                           multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
+                           options = list(placeholder = 'Kliknij aby wybrać arkusz',
+                                          maxItems = 1))
+             },
+           ".xlsx" = {list(selectizeInput("wybor_arkusza_xlsx",
+                                     label = "Wybierz arkusz",
+                                     choices = sheets_name(),
+                                     selected = character(0), 
+                                     multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
+                                     options = list(placeholder = 'Kliknij aby wybrać arkusz',
+                                                    maxItems = 1)),
+                           actionButton("xlsx_wczytaj", "Kliknij aby wczytać arkusz")
+                           )
+             },
+           ".csv" =  numericInput("dynamic", "Dynamic",
+                                     value = 12),
+           ".tsv" = checkboxInput("dynamic", "Dynamic",
+                                      value = TRUE),
+           ".txt" = checkboxGroupInput("dynamic", "Dynamic",
+                                                choices = c("Option 1" = "option1",
+                                                            "Option 2" = "option2"),
+                                                selected = "option2"
+           )
+    )
+    
+    
+  })
+  
   output$wybor_parametrow_UI <- renderUI({
     if (is.null(input$wybor_metody))
       return()
