@@ -1,25 +1,16 @@
+
 library(shiny)
 options(shiny.maxRequestSize = 200*1024^2) #200MB limit wielkości pliku do upload
 source("global.R", encoding = "utf-8")
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-  output$distPlot <- renderPlot({
-    # generate bins based on input$bins from ui.R
-    x    <- faithful[, 2]
-    bins <- 30
-    
-    # draw the histogram with the specified number of bins
-    hist(x,
-         breaks = bins,
-         col = 'darkgray',
-         border = 'white')
-    
-  })
   
+  
+  ## Wczytanie listy arkuszy excel do reaktywnego wyboru w input$wybor_arkusza_xls i input$wybor_arkusza_xlsx####
   sheets_name <- reactive({
     if (!is.null(input$uploaded_file)) {
-      file_ext <- stringr::str_extract(tolower(input$uploaded_file), pattern = "(\\.[a-z]+)$")
+      file_ext <- stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
       if (file_ext %in% c(".xls", ".xlsx")) {
         return(excel_sheets(path = input$uploaded_file$datapath)) 
       }
@@ -41,40 +32,47 @@ shinyServer(function(input, output) {
       return()
     
     print(input$uploaded_file)
-    file_ext <- stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
+    file_ext <-
+      stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
     print(file_ext)
     # Depending on input$input_type, we'll generate a different
     # UI component and send it to the client.
-    switch(file_ext,
-           ".xls" = {selectizeInput("wybor_arkusza_xls",
-                           label = "Wybierz arkusz",
-                           choices = sheets_name(),
-                           selected = character(0), 
-                           multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
-                           options = list(placeholder = 'Kliknij aby wybrać arkusz',
-                                          maxItems = 1))
-             },
-           ".xlsx" = {list(selectizeInput("wybor_arkusza_xlsx",
-                                     label = "Wybierz arkusz",
-                                     choices = sheets_name(),
-                                     selected = character(0), 
-                                     multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
-                                     options = list(placeholder = 'Kliknij aby wybrać arkusz',
-                                                    maxItems = 1)),
-                           actionButton("xlsx_wczytaj", "Kliknij aby wczytać arkusz")
-                           )
-             },
-           ".csv" =  numericInput("dynamic", "Dynamic",
-                                     value = 12),
-           ".tsv" = checkboxInput("dynamic", "Dynamic",
-                                      value = TRUE),
-           ".txt" = checkboxGroupInput("dynamic", "Dynamic",
-                                                choices = c("Option 1" = "option1",
-                                                            "Option 2" = "option2"),
-                                                selected = "option2"
-           )
+    switch(
+      file_ext,
+      ".xls" = {
+        list(
+          selectizeInput(
+            "wybor_arkusza_excel",
+            label = "Wybierz arkusz xls",
+            choices = sheets_name(),
+            selected = character(0),
+            multiple = TRUE,
+            ##BUG https://github.com/rstudio/shiny/issues/1182
+            options = list(placeholder = 'Kliknij aby wybrać arkusz',
+                           maxItems = 1)
+          ),
+          actionButton("wczytaj", "Kliknij aby wczytać arkusz XLS")
+        )
+      },
+      ".xlsx" = {
+        list(
+          selectizeInput(
+            "wybor_arkusza_excel",
+            label = "Wybierz arkusz xlsx",
+            choices = sheets_name(),
+            selected = character(0),
+            multiple = TRUE,
+            ##BUG https://github.com/rstudio/shiny/issues/1182
+            options = list(placeholder = 'Kliknij aby wybrać arkusz',
+                           maxItems = 1)
+          ),
+          actionButton("wczytaj", "Kliknij aby wczytać arkusz XLSX")
+        )
+      },
+      ".csv" = actionButton("wczytaj", "Kliknij aby wczytać plik CSV"),
+      ".tsv" = actionButton("wczytaj", "Kliknij aby wczytać plik TSV"),
+      ".txt" = actionButton("wczytaj", "Kliknij aby wczytać plik TXT")
     )
-    
     
   })
   
@@ -141,5 +139,40 @@ shinyServer(function(input, output) {
      return(paste0("Wybrałeś: ", temp_string * 100, "%"))
     }
   })
+
+  output$render_table <- renderDataTable({
+    
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+    
+    req(input$wczytaj)
+    file <- input$uploaded_file
+    file_ext <-
+      stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
+    
+    # when reading semicolon separated files,
+    # having a comma separator causes `read.csv` to error
+    ret <- tryCatch(
+      {
+        df <- switch(
+          file_ext,
+          ".xls" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+          ".xlsx" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+          ".csv" = {read.csv2(file = file$datapath, stringsAsFactors = F)}
+          )
+            
+          
+      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        stop(safeError(e))
+      }
+    )
+    
+    return(ret)
+    
+  })
+  
   
 })
