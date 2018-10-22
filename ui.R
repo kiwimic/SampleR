@@ -22,6 +22,7 @@ shinyUI(fluidPage(
                 )
                 ),
       uiOutput("parametry_do_wcztania_pliku"),
+      uiOutput("lista_kolumn_UI"),
       selectizeInput("wybor_metody",
                      label = "Wybór metody próbkowania: ",
                      choices = c("Próba losowa"=1,
@@ -33,6 +34,7 @@ shinyUI(fluidPage(
                      multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
                      options = list(placeholder = 'Kliknij aby wybrać jedną z metod próbkowania i przeczytać jej opis',
                                     maxItems = 1)),
+      
       verbatimTextOutput("opis_metody"),
       uiOutput("wybor_parametrow_UI"),
       verbatimTextOutput("test_dynamiczny")
