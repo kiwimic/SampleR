@@ -148,42 +148,27 @@ shinyServer(function(input, output) {
     # Depending on input$input_type, we'll generate a different
     # UI component and send it to the client.
     switch(input$wybor_metody,
-           "1" = textInput("p1_wyborProcent",
+           "1" = {textInput("p1_wyborProcent",
                            label = "Wpisz wielkość próby w procentach",
                            value = NA,
-                           placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%'),
-           "text" = textInput("dynamic", "Dynamic",
-                              value = "starting value"),
-           "numeric" =  numericInput("dynamic", "Dynamic",
-                                     value = 12),
-           "checkbox" = checkboxInput("dynamic", "Dynamic",
-                                      value = TRUE),
-           "checkboxGroup" = checkboxGroupInput("dynamic", "Dynamic",
-                                                choices = c("Option 1" = "option1",
-                                                            "Option 2" = "option2"),
-                                                selected = "option2"
-           ),
-           "radioButtons" = radioButtons("dynamic", "Dynamic",
-                                         choices = c("Option 1" = "option1",
-                                                     "Option 2" = "option2"),
-                                         selected = "option2"
-           ),
-           "selectInput" = selectInput("dynamic", "Dynamic",
-                                       choices = c("Option 1" = "option1",
-                                                   "Option 2" = "option2"),
-                                       selected = "option2"
-           ),
-           "selectInput (multi)" = selectInput("dynamic", "Dynamic",
-                                               choices = c("Option 1" = "option1",
-                                                           "Option 2" = "option2"),
-                                               selected = c("option1", "option2"),
-                                               multiple = TRUE
-           ),
-           "date" = dateInput("dynamic", "Dynamic"),
-           "daterange" = dateRangeInput("dynamic", "Dynamic")
+                           placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')},
+           "2" = {textInput("p1_wyborProcent2",
+                            label = "Wpisz wielkość próby w procentach",
+                            value = NA,
+                            placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')},
+           "3" =  {textInput("p1_wyborProcent3",
+                             label = "Wpisz wielkość próby w procentach",
+                             value = NA,
+                             placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')},
+           "4" = {textInput("p1_wyborProcent4",
+                            label = "Wpisz wielkość próby w procentach",
+                            value = NA,
+                            placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')},
+           "5" = {textInput("p1_wyborProcent5",
+                            label = "Wpisz wielkość próby w procentach",
+                            value = NA,
+                            placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')}
     )
-    
-   
   })
   output$test_dynamiczny <- renderText({
     if (!is.null(input$p1_wyborProcent)) {
