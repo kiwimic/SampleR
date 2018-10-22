@@ -142,6 +142,8 @@ shinyServer(function(input, output) {
   })
   
   output$wybor_parametrow_UI <- renderUI({
+    req(input$wczytaj)
+    
     if (is.null(input$wybor_metody))
       return()
     
@@ -169,6 +171,23 @@ shinyServer(function(input, output) {
                             value = NA,
                             placeholder = '1 oznacza 1%, 0.5/0,5 Pół procenta, 5 to 5%')}
     )
+  })
+  
+  output$selectizeDoWyboruMetody <- renderUI({
+    
+    req(input$wczytaj)
+    
+    selectizeInput("wybor_metody",
+                   label = "Wybór metody próbkowania: ",
+                   choices = c("Próba losowa"=1,
+                               "Próba losowa monetarna"=2,
+                               "Znajdź conajmniej 1 nieprawidłowość"=3,
+                               "Próba losowa w grupach"=4,
+                               "Próba losowa z percentylami"=5),
+                   selected = character(0), 
+                   multiple = TRUE, ##BUG https://github.com/rstudio/shiny/issues/1182
+                   options = list(placeholder = 'Kliknij aby wybrać jedną z metod próbkowania i przeczytać jej opis',
+                                  maxItems = 1))
   })
   output$test_dynamiczny <- renderText({
     if (!is.null(input$p1_wyborProcent)) {
