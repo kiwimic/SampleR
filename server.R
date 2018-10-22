@@ -18,6 +18,47 @@ shinyServer(function(input, output) {
       return(NULL)
     }
   })
+  ## Wczytanie listy kolumn do reaktywnego w wyborze kolumn do pokazania####
+  full_data <- reactive({
+    
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+    
+    req(input$wczytaj)
+    file <- input$uploaded_file
+    file_ext <-
+      stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
+    
+    # when reading semicolon separated files,
+    # having a comma separator causes `read.csv` to error
+    ret <- tryCatch(
+      {
+        df <- switch(
+          file_ext,
+          ".xls" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+          ".xlsx" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+          ".csv" = {read.csv2(file = file$datapath, stringsAsFactors = F)}
+        )
+        
+        
+      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        stop(safeError(e))
+      }
+    )
+    
+    return(ret)
+    
+  })
+  
+  col_list <- reactive({
+    req(input$wczytaj)
+    
+    return(colnames(full_data()))
+   
+  })
   
   
   output$opis_metody <- renderText({
@@ -25,6 +66,30 @@ shinyServer(function(input, output) {
       wybrana_metoda <- as.numeric(input$wybor_metody)
       str_wrap(OpisMetod_list[[wybrana_metoda]], 50)
     }
+  })
+  
+  ## UI z lista kolumn####
+  output$lista_kolumn_UI <- renderUI({
+    req(input$wczytaj)
+    
+    if (length(col_list()) < 7) {
+      selected <- col_list()
+    } else {
+      selected <- col_list()[c(1,2,3,
+                               length(col_list())-2,
+                               length(col_list())-1,
+                               length(col_list()))]
+    }
+    selectizeInput(
+      "wybor_kolumn",
+      label = "Wybierz kolumny do wyświetlenia",
+      choices = col_list(),
+      selected = selected,
+      multiple = TRUE,
+      ##BUG https://github.com/rstudio/shiny/issues/1182
+      options = list(placeholder = 'Kliknij aby wybrać kolumny do wyświetlenia')
+    )
+    
   })
   
   output$parametry_do_wcztania_pliku <- renderUI({
@@ -139,6 +204,8 @@ shinyServer(function(input, output) {
      return(paste0("Wybrałeś: ", temp_string * 100, "%"))
     }
   })
+  
+
 
   output$render_table <- renderDataTable({
     
@@ -146,33 +213,37 @@ shinyServer(function(input, output) {
     # and uploads a file, head of that data file by default,
     # or all rows if selected, will be shown.
     
-    req(input$wczytaj)
-    file <- input$uploaded_file
-    file_ext <-
-      stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
-    
-    # when reading semicolon separated files,
-    # having a comma separator causes `read.csv` to error
-    ret <- tryCatch(
-      {
-        df <- switch(
-          file_ext,
-          ".xls" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
-          ".xlsx" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
-          ".csv" = {read.csv2(file = file$datapath, stringsAsFactors = F)}
-          )
-            
-          
-      },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        stop(safeError(e))
-      }
-    )
-    
-    return(ret)
-    
-  })
+     req(input$wczytaj)
+     req(input$wybor_kolumn)
+  
+     return(full_data()[input$wybor_kolumn])
+     
+  #   file <- input$uploaded_file
+  #   file_ext <-
+  #     stringr::str_extract(tolower(input$uploaded_file$datapath), pattern = "(\\.[a-z]+)$")
+  #   
+  #   # when reading semicolon separated files,
+  #   # having a comma separator causes `read.csv` to error
+  #   ret <- tryCatch(
+  #     {
+  #       df <- switch(
+  #         file_ext,
+  #         ".xls" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+  #         ".xlsx" = {readxl::read_excel(path = file$datapath, sheet = input$wybor_arkusza_excel)},
+  #         ".csv" = {read.csv2(file = file$datapath, stringsAsFactors = F)}
+  #         )
+  #           
+  #         
+  #     },
+  #     error = function(e) {
+  #       # return a safeError if a parsing error occurs
+  #       stop(safeError(e))
+  #     }
+  #   )
+  #   
+  #   return(ret)
+  #   
+ })
   
   
 })
